@@ -4,7 +4,6 @@ const databaseConfig = require('../config/database');
 
 class Database {
     constructor() {
-        console.log(databaseConfig)
         const app = initializeApp(databaseConfig);
         this.db = getFirestore(app);
     }
