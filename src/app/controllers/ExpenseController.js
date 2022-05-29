@@ -8,15 +8,15 @@ class ExpenseController {
 
     index(req, res) {
         let month = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
-        let listYears = [];
+        let yearsList = [];
         let expenses = [];
-        let listExpenses = [];
-        let monthsSorted = [];
-        let listExpensesSorted = [];
+        let expensesList = [];
+        let sortedMonths = [];
+        let expensesSortedList = [];
         ExpenseService.getExpenses()
             .then(resp => {
-                listExpenses = resp.map(item => {
-                    listYears.push(item.data_cadastro);
+                expensesList = resp.map(item => {
+                    yearsList.push(item.data_cadastro);
 
                     return {
                         id: item.id,
@@ -26,13 +26,13 @@ class ExpenseController {
                         valor: item.valor
                     }
                 });
-                let listAllYears = listYears.map(y => format(parseISO(y), 'yyyy', { locale: ptBr }));
+                let listAllYears = yearsList.map(y => format(parseISO(y), 'yyyy', { locale: ptBr }));
                 let listAllYearsUniq = [...new Set(listAllYears)];
                 listAllYearsUniq.sort((a, b) => a - b).reverse().forEach(y => {
-                    monthsSorted = [];
+                    sortedMonths = [];
                     month.forEach(m => {
                         expenses = [];
-                        listExpenses.forEach(e => {
+                        expensesList.forEach(e => {
                             let expenseMonth = format(parseISO(e.data_cadastro), 'MMMM', { locale: ptBr });
                             let expenseYear = format(parseISO(e.data_cadastro), 'yyyy', { locale: ptBr });
 
@@ -51,15 +51,15 @@ class ExpenseController {
                         })
 
                         if (expenses.length > 0) {
-                            monthsSorted.push({
+                            sortedMonths.push({
                                 month: m,
                                 expenses
                             })
                         }
                     })
-                    listExpensesSorted.push({
+                    expensesSortedList.push({
                         year: y,
-                        months: monthsSorted
+                        months: sortedMonths
                     })
 
                 });
@@ -68,8 +68,8 @@ class ExpenseController {
                 return res.status(500).json({ 'message': err.toString(), 'statusCode': 500 });
             })
             .finally(() => {
-                if (listExpensesSorted.length > 0) {
-                    return res.status(200).json({ 'data': listExpensesSorted, 'statusCode': 200 });
+                if (expensesSortedList.length > 0) {
+                    return res.status(200).json({ 'data': expensesSortedList, 'statusCode': 200 });
                 } else {
                     return res.status(204).json({});
                 }
