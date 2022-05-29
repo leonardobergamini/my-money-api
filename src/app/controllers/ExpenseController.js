@@ -94,9 +94,7 @@ class ExpenseController {
             id: v4(),
             nome: requestBody.nome,
             categoria: requestBody.categoria,
-            data_cadastro: new Date(parseInt(requestBody.data_cadastro.substring(6, 10)),
-                parseInt(requestBody.data_cadastro.substring(3, 5) - 1),
-                parseInt(requestBody.data_cadastro.substring(0, 2))).toISOString(),
+            data_cadastro: requestExpenseCreateDate.toISOString(),
             valor: requestBody.valor
         }
 
@@ -129,25 +127,32 @@ class ExpenseController {
     update(req, res) {
         const { body } = req;
         const { id } = req.query;
-        console.log(body, id)
+        const requestExpenseCreateDate = new Date(parseInt(body.data_cadastro.substring(6, 10)),
+        parseInt(body.data_cadastro.substring(3, 5) - 1),
+        parseInt(body.data_cadastro.substring(0, 2)));
+
+        if (isFuture(requestExpenseCreateDate)) {
+            return res.status(400).json({ 'message': 'Data de cadastro superior a data atual', 'statusCode': 400 });
+        }
+
         const newBody = {
             nome: body.nome,
             categoria: body.categoria,
-            data_cadastro: new Date(parseInt(body.data_cadastro.substring(6, 10)),
-                parseInt(body.data_cadastro.substring(3, 5) - 1),
-                parseInt(body.data_cadastro.substring(0, 2))),
+            data_cadastro: requestExpenseCreateDate.toISOString(),
             valor: body.valor
         }
 
-        return res.status(200).json({ 'data': {}, 'statusCode': 200 });
-
-        // ExpenseService.updateExpense(id, newBody)
-        //     .then(res => {
-        //         console.log(res);
-        //     })
-        //     .catch(err => {
-        //         console.log(err)
-        //     })
+        
+        ExpenseService.updateExpense(id, newBody)
+        .then(() => {
+            return res.status(200).json({ 'data': newBody, 'statusCode': 200 });
+        })
+        .catch(err => {
+            if (err.statusCode === 204) {
+                return res.status(204).json({});
+            }
+            return res.status(500).json({ 'message': err.toString(), 'statusCode': 500 });
+        })
     }
 }
 

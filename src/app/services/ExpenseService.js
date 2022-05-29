@@ -57,7 +57,6 @@ class GastoService {
 
     updateExpense(expenseId, expense) {
         return new Promise((resolve, reject) => {
-
             const initialDb = collection(db, 'gastos');
             getDocs(query(initialDb, where("id", "==", expenseId)))
                 .then(res => {
@@ -65,8 +64,8 @@ class GastoService {
                         reject({ 'statusCode': 204 });
                     }
 
-                    res.docs.map(d => {
-                        setDoc(doc(db, 'gastos', expenseId), expense, { merge: true})
+                    res.docs.map(() => {
+                        setDoc(doc(db, 'gastos', res.docs[0].id), expense, { merge: true})
                             .then(() => {
                                 resolve(expense);
                             })
