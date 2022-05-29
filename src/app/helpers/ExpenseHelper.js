@@ -51,7 +51,7 @@ class ExpenseHelper {
                     if (expenses.length > 0) {
                         sortedMonths.push({
                             month: m,
-                            expenses
+                            expenses: expenses.sort((a, b) => new Date(a.create_date) - new Date(b.create_date)).reverse()
                         })
                     }
                 })
