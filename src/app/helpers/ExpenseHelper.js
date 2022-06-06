@@ -3,7 +3,7 @@ const ptBr = require('date-fns/locale/pt-BR');
 
 class ExpenseHelper {
 
-    toGroupByMonths(expenses) {
+    toGroup(expenses) {
         let months = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
         let expensesList = [];
         let yearsList = [];
@@ -55,16 +55,17 @@ class ExpenseHelper {
                         })
                     }
                 })
-                expensesSortedList.push({
-                    year: y,
-                    months: sortedMonths
-                })
+
+                expensesSortedList = this.toGroupByYears(expensesSortedList, sortedMonths, y);
 
             });
         }
 
         return expensesSortedList;
+    }
 
+    toGroupByYears(callbackArray, monthList, year) {
+        return [...callbackArray, {year: year, months: monthList}];
     }
 }
 

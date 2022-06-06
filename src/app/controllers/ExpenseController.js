@@ -1,30 +1,25 @@
 const ExpenseService = require('../services/ExpenseService');
 const ExpenseHelper = require('../helpers/ExpenseHelper');
 const { isFuture } = require('date-fns');
-// const { format, parseISO, isFuture } = require('date-fns');
-// const ptBr = require('date-fns/locale/pt-BR');
 const { v4 } = require('uuid');
 
 
 class ExpenseController {
 
     index(req, res) {
-        let expensesSortedList = [];
         ExpenseService.getExpenses()
             .then(resp => {
-
-                if(!resp.length) {
+                if (!resp.length) {
                     return res.status(204).json({});
                 }
 
-                expensesSortedList = ExpenseHelper.toGroupByMonths(resp);
+                const expensesSortedList = ExpenseHelper.toGroup(resp);
                 return res.status(200).json({ 'data': expensesSortedList, 'status_code': 200 });
-
             })
             .catch(err => {
                 return res.status(500).json({ 'message': err.toString(), 'status_code': 500 });
             })
-    
+
     }
 
     store(req, res) {
