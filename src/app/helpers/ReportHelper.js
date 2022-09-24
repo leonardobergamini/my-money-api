@@ -1,6 +1,5 @@
 const { format, parseISO } = require('date-fns');
 const ptBr = require('date-fns/locale/pt-BR');
-const { filter } = require('rxjs');
 
 class ReportHelper {
     months = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
@@ -11,6 +10,7 @@ class ReportHelper {
         let expensesSortedList = [];
 
         if (expenses) {
+            expenses = this.toMapNewObject(expenses);
             let listAllYears = this.yearsList.map(y => format(parseISO(y), 'yyyy'));
             let listAllYearsUniq = [...new Set(listAllYears)];
             let categoryList = expenses.map(e => e.category)
@@ -117,14 +117,14 @@ class ReportHelper {
 
     toMapNewObject(expenses) {
         return expenses.map(item => {
-            this.yearsList.push(item.data_cadastro);
+            this.yearsList.push(item.create_date);
 
             return {
-                id: item.id,
-                name: item.nome,
-                category: item.categoria,
-                create_date: item.data_cadastro,
-                value: item.valor
+                id: item.expense_id,
+                name: item.name,
+                category: item.category,
+                create_date: item.create_date,
+                value: item.value
             }
         });
     }

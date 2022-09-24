@@ -9,20 +9,18 @@ class ExpenseHelper {
         let yearsList = [];
         let sortedMonths = [];
         let expensesSortedList = [];
-
         if (expenses) {
             expensesList = expenses.map(item => {
-                yearsList.push(item.data_cadastro);
+                yearsList.push(item.create_date);
 
                 return {
-                    id: item.id,
-                    nome: item.nome,
-                    categoria: item.categoria,
-                    data_cadastro: item.data_cadastro,
-                    valor: item.valor
+                    id: item.expense_id,
+                    nome: item.name,
+                    categoria: item.category,
+                    data_cadastro: item.create_date,
+                    valor: item.value
                 }
             });
-
             let listAllYears = yearsList.map(y => format(parseISO(y), 'yyyy'));
             let listAllYearsUniq = [...new Set(listAllYears)];
 

@@ -6,7 +6,7 @@ const { v4 } = require('uuid');
 
 class ExpenseController {
 
-    index(req, res) {
+    async index(req, res) {
         ExpenseService.getExpenses()
             .then(resp => {
                 if (!resp.length) {
@@ -22,26 +22,26 @@ class ExpenseController {
 
     }
 
-    store(req, res) {
+    async store(req, res) {
         const requestBody = req.body;
         const requestExpenseCreateDate = new Date(parseInt(requestBody.data_cadastro.substring(6, 10)),
             parseInt(requestBody.data_cadastro.substring(3, 5) - 1),
             parseInt(requestBody.data_cadastro.substring(0, 2)));
 
         if (!requestBody) {
-            return res.status(400).json({ 'message': 'Sem body de request', 'status_code': 400 });
+            return res.status(400).json({ 'message': 'no body request', 'status_code': 400 });
         }
 
         if (isFuture(requestExpenseCreateDate)) {
-            return res.status(400).json({ 'message': 'Data de cadastro superior a data atual', 'status_code': 400 });
+            return res.status(400).json({ 'message': 'creation date higher than current date', 'status_code': 400 });
         }
 
         const expense = {
-            id: v4(),
-            nome: requestBody.nome,
-            categoria: requestBody.categoria,
-            data_cadastro: requestExpenseCreateDate.toISOString(),
-            valor: requestBody.valor
+            expense_id: v4(),
+            name: requestBody.nome,
+            category: requestBody.categoria,
+            create_date: requestExpenseCreateDate.toISOString(),
+            value: requestBody.valor
         }
 
         ExpenseService.newExpense(expense)
@@ -53,13 +53,13 @@ class ExpenseController {
             });
     }
 
-    delete(req, res) {
+    async delete(req, res) {
         const { id } = req.query;
 
         ExpenseService.deleteExpense(id)
             .then(resp => {
                 if (resp) {
-                    return res.status(200).json({ 'message': 'Gasto excluído com sucesso', 'status_code': 200 });
+                    return res.status(200).json({ 'message': 'expense deleted successfully', 'status_code': 200 });
                 }
             })
             .catch(err => {
@@ -70,7 +70,7 @@ class ExpenseController {
             });
     }
 
-    update(req, res) {
+    async update(req, res) {
         const { body } = req;
         const { id } = req.query;
         const requestExpenseCreateDate = new Date(parseInt(body.data_cadastro.substring(6, 10)),
@@ -78,14 +78,14 @@ class ExpenseController {
             parseInt(body.data_cadastro.substring(0, 2)));
 
         if (isFuture(requestExpenseCreateDate)) {
-            return res.status(400).json({ 'message': 'Data de cadastro superior a data atual', 'status_code': 400 });
+            return res.status(400).json({ 'message': 'creation date higher than current date', 'status_code': 400 });
         }
 
         const newBody = {
-            nome: body.nome,
-            categoria: body.categoria,
-            data_cadastro: requestExpenseCreateDate.toISOString(),
-            valor: body.valor
+            name: body.nome,
+            category: body.categoria,
+            create_date: requestExpenseCreateDate.toISOString(),
+            value: body.valor
         }
 
 

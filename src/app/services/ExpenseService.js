@@ -1,83 +1,90 @@
-const { collection, getDocs, deleteDoc, doc, setDoc, query, where } = require('firebase/firestore/lite');
-const { v4 } = require('uuid');
+const { MongoClient } = require("mongodb");
+class ExpenseService {
+    uri = "<CONNECTION_URL>";
 
-const db = require('../../database/database');
+    async getExpenses() {
+        return new Promise(async (resolve, reject) => {
+            const client = new MongoClient(this.uri);
+            try {
+                const database = client.db('my_money');
+                const expensesDb = database.collection('expenses');
+                const returnedExpenses = await expensesDb.find({});
+                const expenses = await returnedExpenses.toArray();
 
-class GastoService {
-
-    getExpenses() {
-        return new Promise((resolve, reject) => {
-            const initialDb = collection(db, 'gastos');
-            getDocs(initialDb)
-                .then(res => {
-                    const expenses = res.docs.map(doc => doc.data());
+                if (expenses.length > 0) {
                     resolve(expenses);
-                })
-                .catch(err => {
-                    reject(err);
-                })
+                } else {
+                    reject('no expenses found');
+                }
+
+            } catch (err) {
+                console.log(err);
+                reject(err);
+            } finally {
+                await client.close();
+            }
         });
     }
 
-    newExpense(expense) {
-        return new Promise((resolve, reject) => {
-            setDoc(doc(db, 'gastos', v4()), expense)
-                .then(() => {
-                    resolve(true);
-                })
-                .catch(err => {
-                    reject(err);
-                });
+    async newExpense(expense) {
+        return new Promise(async (resolve, reject) => {
+            const client = new MongoClient(this.uri);
+            try {
+                const database = client.db('my_money');
+                const expensesDb = database.collection('expenses');
+                await expensesDb.insertOne(expense);
+                resolve('new expense created');
+            } catch (error) {
+                reject(error);
+            }
+            finally {
+                await client.close();
+            }
         });
     }
 
-    deleteExpense(expenseId) {
-        return new Promise((resolve, reject) => {
-            const initialDb = collection(db, 'gastos');
-            getDocs(query(initialDb, where("id", "==", expenseId)))
-                .then(res => {
-                    if (!res.docs.length > 0) {
-                        reject({ 'statusCode': 204 });
-                    }
-                    res.docs.map(doc => {
-                        deleteDoc(doc.ref)
-                            .then(() => {
-                                resolve(true);
-                            })
-                            .catch(err => {
-                                reject(err);
-                            });
-                    });
-                })
-                .catch(err => {
-                    reject(err);
-                })
+    async deleteExpense(expenseId) {
+        return new Promise(async (resolve, reject) => {
+            const client = new MongoClient(this.uri);
+            try {
+                const database = client.db('my_money');
+                const expensesDb = database.collection('expenses');
+                await expensesDb.deleteOne({ expense_id: expenseId });
+                resolve('deleted expense');
+            } catch (error) {
+                reject(error);
+            }
+            finally {
+                await client.close();
+            }
         });
     }
 
-    updateExpense(expenseId, expense) {
-        return new Promise((resolve, reject) => {
-            const initialDb = collection(db, 'gastos');
-            getDocs(query(initialDb, where("id", "==", expenseId)))
-                .then(res => {
-                    if (!res.docs.length > 0) {
-                        reject({ 'statusCode': 204 });
-                    }
+    async updateExpense(expenseId, expense) {
+        return new Promise(async (resolve, reject) => {
+            const client = new MongoClient(this.uri);
+            try {
+                const database = client.db('my_money');
+                const expensesDb = database.collection('expenses');
+                const returnedExpenses = await expensesDb.findOne({ expense_id: expenseId });
 
-                    res.docs.map(() => {
-                        setDoc(doc(db, 'gastos', res.docs[0].id), expense, { merge: true})
-                            .then(() => {
-                                resolve(expense);
-                            })
-                            .catch(err => {
-                                reject(err);
-                            });
-                    })
-                })
+                if (!returnedExpenses) {
+                    reject('no expense found to update');
+                }
 
+                const updateExpense = { ...expense, expense_id: expenseId };
+
+                await expensesDb.replaceOne({ expense_id: expenseId }, updateExpense);
+                resolve('updated expense');
+            } catch (error) {
+                reject(error);
+            }
+            finally {
+                await client.close();
+            }
         });
     }
 }
 
 
-module.exports = new GastoService();
+module.exports = new ExpenseService();
