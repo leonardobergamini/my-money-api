@@ -7,36 +7,45 @@ const { v4 } = require('uuid');
 class ExpenseController {
 
     async index(req, res) {
-        ExpenseService.getExpenses()
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(401).json({ 'message': 'required login' });
+        }
+        ExpenseService.getExpenses(userId)
             .then(resp => {
                 if (!resp.length) {
-                    return res.status(204).json({});
+                    return res.status(404).json({ 'message': 'expenses not found' });
                 }
 
                 const expensesSortedList = ExpenseHelper.toGroup(resp);
-                return res.status(200).json({ 'data': expensesSortedList, 'status_code': 200 });
+                return res.status(200).json({ 'data': expensesSortedList });
             })
             .catch(err => {
-                return res.status(500).json({ 'message': err.toString(), 'status_code': 500 });
+                return res.status(500).json({ 'message': err.toString() });
             })
 
     }
 
     async store(req, res) {
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(401).json({ 'message': 'required login' });
+        }
         const requestBody = req.body;
         const requestExpenseCreateDate = new Date(parseInt(requestBody.data_cadastro.substring(6, 10)),
             parseInt(requestBody.data_cadastro.substring(3, 5) - 1),
             parseInt(requestBody.data_cadastro.substring(0, 2)));
 
         if (!requestBody) {
-            return res.status(400).json({ 'message': 'no body request', 'status_code': 400 });
+            return res.status(400).json({ 'message': 'no body request' });
         }
 
         if (isFuture(requestExpenseCreateDate)) {
-            return res.status(400).json({ 'message': 'creation date higher than current date', 'status_code': 400 });
+            return res.status(400).json({ 'message': 'creation date higher than current date' });
         }
 
         const expense = {
+            user_id: userId,
             expense_id: v4(),
             name: requestBody.nome,
             category: requestBody.categoria,
@@ -45,32 +54,40 @@ class ExpenseController {
         }
 
         ExpenseService.newExpense(expense)
-            .catch(err => {
-                return res.status(500).json({ 'message': err.toString(), 'status_code': 500 });
+            .then(() => {
+                return res.status(201).json({ 'message': 'expense created successfully' });
             })
-            .finally(() => {
-                return res.status(200).json({ 'data': expense, 'status_code': 200 });
+            .catch(err => {
+                return res.status(500).json({ 'message': err.toString() });
             });
     }
 
     async delete(req, res) {
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(401).json({ 'message': 'required login' });
+        }
         const { id } = req.query;
 
-        ExpenseService.deleteExpense(id)
+        ExpenseService.deleteExpense(id, userId)
             .then(resp => {
                 if (resp) {
-                    return res.status(200).json({ 'message': 'expense deleted successfully', 'status_code': 200 });
+                    if (resp.length === 0) {
+                        return res.status(404).json({ 'message': 'expense not found' });
+                    }
+                    return res.status(200).json({ 'message': 'expense deleted successfully' });
                 }
             })
             .catch(err => {
-                if (err.status_code === 204) {
-                    return res.status(204).json({});
-                }
-                return res.status(500).json({ 'message': err.toString(), 'status_code': 500 });
+                return res.status(500).json({ 'message': err.toString() });
             });
     }
 
     async update(req, res) {
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(401).json({ 'message': 'required login' });
+        }
         const { body } = req;
         const { id } = req.query;
         const requestExpenseCreateDate = new Date(parseInt(body.data_cadastro.substring(6, 10)),
@@ -78,10 +95,11 @@ class ExpenseController {
             parseInt(body.data_cadastro.substring(0, 2)));
 
         if (isFuture(requestExpenseCreateDate)) {
-            return res.status(400).json({ 'message': 'creation date higher than current date', 'status_code': 400 });
+            return res.status(400).json({ 'message': 'creation date higher than current date' });
         }
 
         const newBody = {
+            user_id: userId,
             name: body.nome,
             category: body.categoria,
             create_date: requestExpenseCreateDate.toISOString(),
@@ -91,13 +109,10 @@ class ExpenseController {
 
         ExpenseService.updateExpense(id, newBody)
             .then(() => {
-                return res.status(200).json({ 'data': newBody, 'status_code': 200 });
+                return res.status(200).json({ 'message': 'expense updated successfully' });
             })
             .catch(err => {
-                if (err.status_code === 204) {
-                    return res.status(204).json({});
-                }
-                return res.status(500).json({ 'message': err.toString(), 'status_code': 500 });
+                return res.status(500).json({ 'message': err.toString() });
             })
     }
 }

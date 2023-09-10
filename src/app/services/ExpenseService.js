@@ -1,24 +1,21 @@
 const { MongoClient } = require("mongodb");
-class ExpenseService {
-    uri = "<CONNECTION_URL>";
+require('dotenv').config();
 
-    async getExpenses() {
+class ExpenseService {
+    uri = process.env.URI_MONGODB;
+
+    async getExpenses(userId) {
         return new Promise(async (resolve, reject) => {
             const client = new MongoClient(this.uri);
             try {
-                const database = client.db('my_money');
+                const database = client.db(process.env.MONGODB_DATABASE_NAME);
                 const expensesDb = database.collection('expenses');
-                const returnedExpenses = await expensesDb.find({});
+                const returnedExpenses = await expensesDb.find({ user_id: userId });
                 const expenses = await returnedExpenses.toArray();
 
-                if (expenses.length > 0) {
-                    resolve(expenses);
-                } else {
-                    reject('no expenses found');
-                }
+                resolve(expenses);
 
             } catch (err) {
-                console.log(err);
                 reject(err);
             } finally {
                 await client.close();
@@ -30,7 +27,7 @@ class ExpenseService {
         return new Promise(async (resolve, reject) => {
             const client = new MongoClient(this.uri);
             try {
-                const database = client.db('my_money');
+                const database = client.db(process.env.MONGODB_DATABASE_NAME);
                 const expensesDb = database.collection('expenses');
                 await expensesDb.insertOne(expense);
                 resolve('new expense created');
@@ -43,14 +40,19 @@ class ExpenseService {
         });
     }
 
-    async deleteExpense(expenseId) {
+    async deleteExpense(expenseId, userId) {
         return new Promise(async (resolve, reject) => {
             const client = new MongoClient(this.uri);
             try {
-                const database = client.db('my_money');
+                const database = client.db(process.env.MONGODB_DATABASE_NAME);
                 const expensesDb = database.collection('expenses');
-                await expensesDb.deleteOne({ expense_id: expenseId });
-                resolve('deleted expense');
+                const query = { user_id: userId, expense_id: expenseId };
+                const { deletedCount } = await expensesDb.deleteOne(query);
+                if (deletedCount === 0) {
+                    resolve([]);
+                    return;
+                }
+                resolve(deletedCount);
             } catch (error) {
                 reject(error);
             }
@@ -60,13 +62,13 @@ class ExpenseService {
         });
     }
 
-    async updateExpense(expenseId, expense) {
+    async updateExpense(userId, expenseId, expense) {
         return new Promise(async (resolve, reject) => {
             const client = new MongoClient(this.uri);
             try {
-                const database = client.db('my_money');
+                const database = client.db(process.env.MONGODB_DATABASE_NAME);
                 const expensesDb = database.collection('expenses');
-                const returnedExpenses = await expensesDb.findOne({ expense_id: expenseId });
+                const returnedExpenses = await expensesDb.findOne({ expense_id: expenseId, user_id: userId });
 
                 if (!returnedExpenses) {
                     reject('no expense found to update');
@@ -74,7 +76,7 @@ class ExpenseService {
 
                 const updateExpense = { ...expense, expense_id: expenseId };
 
-                await expensesDb.replaceOne({ expense_id: expenseId }, updateExpense);
+                await expensesDb.replaceOne({ expense_id: expenseId, user_id: userId }, updateExpense);
                 resolve('updated expense');
             } catch (error) {
                 reject(error);
