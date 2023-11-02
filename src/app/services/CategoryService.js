@@ -41,6 +41,27 @@ class CategoryService {
             }
         });
     }
+
+    async deleteCategory(categoryId, userId) {
+        return new Promise(async (resolve, reject) => {
+            const client = new MongoClient(this.uri);
+            try {
+                const database = client.db(process.env.MONGODB_DATABASE_NAME);
+                const expensesDb = database.collection('categories');
+                const query = { user_id: userId, category_id: categoryId };
+                const { deletedCount } = await expensesDb.deleteOne(query);
+                if (deletedCount === 0) {
+                    resolve([]);
+                    return;
+                }
+                resolve(deletedCount);
+            } catch (error) {
+                reject(error);
+            } finally {
+                await client.close();
+            }
+        });
+    }
 }
 
 module.exports = new CategoryService();

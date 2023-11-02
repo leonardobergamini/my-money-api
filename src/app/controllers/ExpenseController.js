@@ -41,7 +41,7 @@ class ExpenseController {
         }
 
         if (isFuture(requestExpenseCreateDate)) {
-            return res.status(400).json({ 'message': 'creation date higher than current date' });
+            return res.status(422).json({ 'message': 'creation date higher than current date' });
         }
 
         const expense = {
@@ -67,9 +67,13 @@ class ExpenseController {
         if (!userId) {
             return res.status(401).json({ 'message': 'required login' });
         }
-        const { id } = req.query;
+        const expenseId = req.path.substring(10);
 
-        ExpenseService.deleteExpense(id, userId)
+        if(!expenseId) {
+            return res.status(400).json({ 'message': 'expense id is required' });
+        }
+
+        ExpenseService.deleteExpense(expenseId, userId)
             .then(resp => {
                 if (resp) {
                     if (resp.length === 0) {
@@ -89,7 +93,7 @@ class ExpenseController {
             return res.status(401).json({ 'message': 'required login' });
         }
         const { body } = req;
-        const { id } = req.query;
+        const expenseId = req.path.substring(10);
         const requestExpenseCreateDate = new Date(parseInt(body.data_cadastro.substring(6, 10)),
             parseInt(body.data_cadastro.substring(3, 5) - 1),
             parseInt(body.data_cadastro.substring(0, 2)));
@@ -99,7 +103,6 @@ class ExpenseController {
         }
 
         const newBody = {
-            user_id: userId,
             name: body.nome,
             category: body.categoria,
             create_date: requestExpenseCreateDate.toISOString(),
@@ -107,7 +110,7 @@ class ExpenseController {
         }
 
 
-        ExpenseService.updateExpense(id, newBody)
+        ExpenseService.updateExpense(userId, expenseId, newBody)
             .then(() => {
                 return res.status(200).json({ 'message': 'expense updated successfully' });
             })

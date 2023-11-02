@@ -68,15 +68,14 @@ class ExpenseService {
             try {
                 const database = client.db(process.env.MONGODB_DATABASE_NAME);
                 const expensesDb = database.collection('expenses');
-                const returnedExpenses = await expensesDb.findOne({ expense_id: expenseId, user_id: userId });
-
+                const query = { $and: [{ user_id: userId }, { expense_id: expenseId }] };
+                const returnedExpenses = await expensesDb.findOne(query);
                 if (!returnedExpenses) {
                     reject('no expense found to update');
                 }
 
-                const updateExpense = { ...expense, expense_id: expenseId };
-
-                await expensesDb.replaceOne({ expense_id: expenseId, user_id: userId }, updateExpense);
+                const updateExpense = { ...expense, expense_id: expenseId, user_id: userId };
+                await expensesDb.replaceOne(query, updateExpense);
                 resolve('updated expense');
             } catch (error) {
                 reject(error);

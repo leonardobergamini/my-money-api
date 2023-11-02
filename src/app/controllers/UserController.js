@@ -23,9 +23,8 @@ class UserController {
         const newUser = { name, email, password_hash };
 
         UserService.newUser(newUser)
-            .then(resp => {
-                const createdUser = { name: name, email: email, userId: resp };
-                return res.status(201).json({ 'data': createdUser });
+            .then(() => {
+                return res.status(201);
             })
             .catch(error => {
                 if (error.toString() === 'user email already used') {

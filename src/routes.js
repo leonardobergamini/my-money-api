@@ -10,8 +10,8 @@ const routes = new Router();
 
 routes.get('/expenses', AuthMiddleware, ExpenseController.index);
 routes.post('/expenses', AuthMiddleware, ExpenseController.store);
-routes.put('/expenses?:id', AuthMiddleware, ExpenseController.update);
-routes.delete('/expenses?:id', AuthMiddleware, ExpenseController.delete);
+routes.put('/expenses/:id', AuthMiddleware, ExpenseController.update);
+routes.delete('/expenses/:id', AuthMiddleware, ExpenseController.delete);
 
 routes.get('/reports', AuthMiddleware, ReportController.index);
 routes.get('/reports?:year', AuthMiddleware, ReportController.index);
@@ -23,5 +23,6 @@ routes.post('/login', LoginController.index);
 
 routes.get('/categories', AuthMiddleware, CategoryController.index);
 routes.post('/categories', AuthMiddleware, CategoryController.store);
+routes.delete('/categories/:id', AuthMiddleware, CategoryController.delete);
 
 module.exports = routes;
